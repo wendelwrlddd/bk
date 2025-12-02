@@ -159,6 +159,8 @@ async function finalizeOrder() {
 
         const data = await response.json();
 
+        console.log('API Response:', data);
+
         if (data.success) {
             // Show QR Code
             $('#step-3').html(`
@@ -183,12 +185,31 @@ async function finalizeOrder() {
             // Hide back button
             $('button[onclick="prevStep(2)"]').hide();
         } else {
-            alert('Erro ao gerar Pix: ' + (data.message || 'Tente novamente.'));
+            console.error('Erro ao gerar Pix:', data.message || 'Tente novamente.');
+            console.error('Detalhes do erro:', data);
+            
+            // Send log to terminal
+            logToTerminal('error', 'Erro ao gerar Pix: ' + (data.message || 'Tente novamente.'), data);
+            
             btn.prop('disabled', false).text(originalText);
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Erro de conexão. Verifique se o servidor backend está rodando.');
+        console.error('Erro de conexão. Verifique se o servidor backend está rodando.');
+        
+        // Send log to terminal
+        logToTerminal('error', 'Erro de conexão ou exceção no frontend', { error: error.toString() });
+        
         btn.prop('disabled', false).text(originalText);
     }
+}
+
+function logToTerminal(type, message, data) {
+    fetch('http://localhost:3000/api/log', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ type, message, data })
+    }).catch(err => console.error('Failed to send log to terminal', err));
 }
