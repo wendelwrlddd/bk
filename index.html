@@ -1033,7 +1033,29 @@ src="https://www.facebook.com/tr?id=1457128631859465&ev=PageView&noscript=1"
 
 
 
+
 </body>
+<style>
+    /* Fix para o texto "Atendimento" do Typebot não aparecer cortado */
+    #typebot-bubble button[data-testid="bubble"] span,
+    #typebot-bubble .typebot-preview-message,
+    [class*="typebot"] [class*="preview"],
+    [class*="typebot"] [class*="message"] {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        min-width: max-content !important;
+        padding: 8px 16px !important;
+    }
+    
+    /* Garantir que o container do preview message tenha largura suficiente */
+    #typebot-bubble > div[style*="position"],
+    [class*="typebot"] > div[style*="fixed"] {
+        width: auto !important;
+        min-width: fit-content !important;
+    }
+</style>
+
 <script type="module">
     import Typebot from 'https://cdn.jsdelivr.net/npm/@typebot.io/js@0/dist/web.js'; Typebot.initBubble({ typebot: "buguer-king", apiHost: "https://viewer.n8njr.shop", previewMessage: { message: "Atendimento", autoShowDelay: 15000, avatarUrl: "https://minio.n8njr.shop/typebot/public/workspaces/cmdw5zozv0000mh1rzam9v75f/typebots/hvxl33y7y23ek7lwix4mzzhx/hostAvatar?v=1755608388328",
     }, theme: { button: { backgroundColor: "#FFFFFF", customIconSrc: "https://minio.n8njr.shop/typebot/public/workspaces/cmdw5zozv0000mh1rzam9v75f/typebots/hvxl33y7y23ek7lwix4mzzhx/bubble-icon?v=1755609166224", }, previewMessage: { backgroundColor: "#FFFFFF",

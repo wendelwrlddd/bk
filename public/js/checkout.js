@@ -9,9 +9,23 @@ $(document).ready(function(){
     const productParam = urlParams.get('product');
     const priceParam = urlParams.get('price');
 
+    // Mapeamento de produtos para suas imagens
+    const productImages = {
+        'King em Triplo': 'images/sMJTr5czNswQ.webp',
+        'Combo Favorito + Combo Sanduíche': 'images/2GqpuXExclby.webp',
+        'Sanduíche + Batata + Bebida + BK Mix': 'images/la8F46SHOnQm.webp',
+        '3 Combos Sandubas': 'images/IMG_9329.png',
+        'Dupla BK': 'images/IMG_9330.png'
+    };
+
     if (productParam) {
-        // Update product info if needed (e.g. title in summary)
-        // For now, we just use it in the order data
+        // Atualizar o título do produto no resumo
+        $('#summary-title').text(productParam);
+        
+        // Atualizar a imagem do produto se existir no mapeamento
+        if (productImages[productParam]) {
+            $('#summary-img').attr('src', productImages[productParam]);
+        }
     }
 
     if (priceParam) {
