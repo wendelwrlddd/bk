@@ -15,7 +15,8 @@ $(document).ready(function(){
         'Combo Favorito + Combo Sanduíche': 'images/2GqpuXExclby.webp',
         'Sanduíche + Batata + Bebida + BK Mix': 'images/la8F46SHOnQm.webp',
         '3 Combos Sandubas': 'images/IMG_9329.png',
-        'Dupla BK': 'images/IMG_9330.png'
+        'Dupla BK': 'images/IMG_9330.png',
+        'Combo Sanduba Solo': 'images/la8F46SHOnQm.webp'
     };
 
     if (productParam) {
