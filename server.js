@@ -94,8 +94,16 @@ app.post('/api/create-pix', async (req, res) => {
         const qrCodeImage = pixData.qrcode_image || pixData.qr_code_image || pixData.pix_qr_code || response.data.qrcode_image;
         const qrCodeText = pixData.qrcode || pixData.qr_code_text || pixData.pix_qr_code || response.data.qrcode;
 
-        // If we have text but no image, we can generate one (optional, but good fallback)
-        // For now, let's just send what we have
+        // Generate QR Code Image (Base64) if we have the text
+        if (qrCodeText && (!qrCodeImage || !qrCodeImage.startsWith('http'))) {
+            try {
+                qrCodeImage = await QRCode.toDataURL(qrCodeText);
+                console.log('Generated QR Code Image (Base64)');
+            } catch (qrError) {
+                console.error('Error generating QR Code:', qrError);
+                // Fallback to text if generation fails, though frontend might not show image
+            }
+        }
         
         res.json({
             success: true,
