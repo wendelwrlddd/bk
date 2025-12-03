@@ -91,7 +91,7 @@ app.post('/api/create-pix', async (req, res) => {
 
         // Extract QR Code data handling multiple possible structures
         const pixData = response.data.pix || response.data;
-        const qrCodeImage = pixData.qrcode_image || pixData.qr_code_image || pixData.pix_qr_code || response.data.qrcode_image;
+        let qrCodeImage = pixData.qrcode_image || pixData.qr_code_image || pixData.pix_qr_code || response.data.qrcode_image;
         const qrCodeText = pixData.qrcode || pixData.qr_code_text || pixData.pix_qr_code || response.data.qrcode;
 
         // Generate QR Code Image (Base64) if we have the text
@@ -104,6 +104,9 @@ app.post('/api/create-pix', async (req, res) => {
                 // Fallback to text if generation fails, though frontend might not show image
             }
         }
+        
+        console.log('QR Code Image:', qrCodeImage ? 'Generated' : 'Not available');
+        console.log('QR Code Text:', qrCodeText ? 'Available' : 'Not available');
         
         res.json({
             success: true,
