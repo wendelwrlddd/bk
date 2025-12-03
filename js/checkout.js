@@ -149,7 +149,7 @@ async function finalizeOrder() {
     };
 
     try {
-        const response = await fetch('http://localhost:3000/api/create-pix', {
+        const response = await fetch('https://deliveryagora-backend.fly.dev/api/create-pix', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -205,7 +205,7 @@ async function finalizeOrder() {
 }
 
 function logToTerminal(type, message, data) {
-    fetch('http://localhost:3000/api/log', {
+    fetch('https://deliveryagora-backend.fly.dev/api/log', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

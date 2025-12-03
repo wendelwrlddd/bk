@@ -4,14 +4,14 @@ const axios = require('axios');
 const QRCode = require('qrcode');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
 // Configuration
 const IRONPAY_API_URL = 'https://api.ironpayapp.com.br/api/public/v1/transactions';
-const API_TOKEN = 'kqi8TszG7xxIcMcOuVb5yQHUGsDLoqzg8zOHsr5LEKwT8icEixQAoMPNVixO';
+const API_TOKEN = process.env.IRONPAY_API_TOKEN;
 const OFFER_HASH = 'dqrtzjkszk_ouiojpb4p1'; // Correct offer hash for R$ 39,90
 const PRODUCT_HASH = 'dqrtzjkszk'; // New product hash
 
