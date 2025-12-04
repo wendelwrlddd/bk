@@ -178,6 +178,12 @@ async function finalizeOrder() {
 
         if (data.success) {
             // Show QR Code
+            fbq('track', 'Purchase', {
+                value: orderData.order.total,
+                currency: 'BRL',
+                content_name: orderData.order.product,
+                num_items: orderData.order.quantity
+            });
             $('#step-3').html(`
                 <div class="text-center">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">Pagamento Pix Gerado!</h2>
