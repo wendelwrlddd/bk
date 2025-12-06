@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const loadingModal = showImprovedLoadingModal();
     
     try {
-        // Fetch location directly from ip-api.com (uses client's public IP)
-        const response = await fetch('http://ip-api.com/json/');
+        // Usar ipapi.co para geolocalização
+        const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
         
-        if (data.status === 'success' && data.city) {
+        console.log('Geolocation data:', data);
+        
+        if (data.city) {
             // Update header to show only city name
             locationText.textContent = data.city;
             
@@ -225,7 +227,10 @@ function showExclusivePromotion(city) {
     ctaBtn.onclick = () => {
         modalOverlay.remove();
         // Scroll to offers
-        document.querySelector('.ctn_listagem_prods').scrollIntoView({ behavior: 'smooth' });
+        const offersSection = document.querySelector('.ctn_listagem_prods');
+        if (offersSection) {
+            offersSection.scrollIntoView({ behavior: 'smooth' });
+        }
     };
     
     // Assemble
