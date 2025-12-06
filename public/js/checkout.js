@@ -190,6 +190,16 @@ async function finalizeOrder() {
                     <p class="text-gray-600 mb-4">Escaneie o QR Code abaixo para pagar:</p>
                     <img src="${data.qrCodeImage}" alt="QR Code Pix" class="mx-auto mb-4 border p-2 rounded-lg" style="max-width: 250px;">
                     
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                        <p class="text-sm text-gray-700 mb-1">Este QR Code expira em:</p>
+                        <div id="qr-timer" class="text-2xl font-bold text-red-600"></div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg p-4 mb-4">
+                        <p class="font-bold text-lg mb-1">🎁 Pague agora e ganhe 1000 pontos no Clube BK!</p>
+                        <p class="text-sm">Esses pontos equivalem a um combo de graça!</p>
+                    </div>
+                    
                     <p class="text-sm text-gray-500 mb-2">Ou copie o código abaixo:</p>
                     <div class="bg-gray-100 p-3 rounded text-xs break-all mb-4 select-all cursor-pointer" onclick="navigator.clipboard.writeText(this.innerText); alert('Código copiado!')">
                         ${data.qrCodeText}
@@ -203,6 +213,10 @@ async function finalizeOrder() {
                     </div>
                 </div>
             `);
+            
+            // Iniciar timer de 10 minutos
+            startQRTimer(10 * 60); // 10 minutos em segundos
+            
             // Hide back button
             $('button[onclick="prevStep(2)"]').hide();
         } else {
@@ -233,4 +247,27 @@ function logToTerminal(type, message, data) {
         },
         body: JSON.stringify({ type, message, data })
     }).catch(err => console.error('Failed to send log to terminal', err));
+}
+
+function startQRTimer(seconds) {
+    let timeLeft = seconds;
+    const timerElement = document.getElementById('qr-timer');
+    
+    function updateTimer() {
+        const minutes = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
+        
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        if (timeLeft <= 0) {
+            timerElement.textContent = 'EXPIRADO';
+            timerElement.classList.add('animate-pulse');
+            return;
+        }
+        
+        timeLeft--;
+        setTimeout(updateTimer, 1000);
+    }
+    
+    updateTimer();
 }

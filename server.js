@@ -139,6 +139,64 @@ app.post('/api/create-pix', async (req, res) => {
     }
 });
 
+app.get('/api/location', async (req, res) => {
+    try {
+        // Get IP address (handle proxies)
+        let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        
+        // Clean up IP string (e.g., remove ::ffff: prefix for IPv4 mapped addresses)
+        if (ip && ip.includes('::ffff:')) {
+            ip = ip.split('::ffff:')[1];
+        }
+        
+        // If multiple IPs in x-forwarded-for, take the first one
+        if (ip && ip.includes(',')) {
+            ip = ip.split(',')[0].trim();
+        }
+
+        console.log('Detected IP:', ip);
+
+        // Default for localhost/private IPs
+        if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+            return res.json({
+                city: 'São Paulo',
+                region: 'SP',
+                country: 'BR',
+                is_default: true
+            });
+        }
+
+        // Call Geolocation API
+        const response = await axios.get(`http://ip-api.com/json/${ip}`);
+        
+        if (response.data.status === 'success') {
+            res.json({
+                city: response.data.city,
+                region: response.data.region,
+                country: response.data.countryCode,
+                is_default: false
+            });
+        } else {
+            // Fallback if API fails to locate IP
+            res.json({
+                city: 'sua cidade',
+                region: '',
+                country: 'BR',
+                is_default: true
+            });
+        }
+
+    } catch (error) {
+        console.error('Geolocation Error:', error.message);
+        res.json({
+            city: 'sua cidade',
+            region: '',
+            country: 'BR',
+            is_default: true
+        });
+    }
+});
+
 app.post('/api/log', (req, res) => {
     const { type, message, data } = req.body;
     const timestamp = new Date().toISOString();

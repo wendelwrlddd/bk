@@ -1,0 +1,83 @@
+/* Notificações de Compra */
+.purchase-notification {
+    position: fixed;
+    bottom: 20px;
+    right: -400px;
+    background: linear-gradient(135deg, rgba(80, 35, 20, 0.98) 0%, rgba(217, 38, 5, 0.98) 100%);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    z-index: 10000;
+    max-width: 350px;
+    transition: right 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    border: 1px solid rgba(255, 130, 51, 0.3);
+}
+
+.purchase-notification.show {
+    right: 20px;
+}
+
+.notification-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid rgba(255, 130, 51, 0.5);
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-text {
+    color: #fff;
+    font-size: 13px;
+    margin: 0 0 5px 0;
+    line-height: 1.4;
+}
+
+.notification-text strong {
+    color: #ff8233;
+    font-weight: 600;
+}
+
+.notification-product {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .purchase-notification {
+        max-width: calc(100% - 40px);
+        right: -100%;
+    }
+    
+    .purchase-notification.show {
+        right: 20px;
+    }
+    
+    .notification-image {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .notification-text {
+        font-size: 12px;
+    }
+    
+    .notification-product {
+        font-size: 13px;
+    }
+}
