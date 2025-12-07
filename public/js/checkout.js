@@ -13,10 +13,10 @@ $(document).ready(function(){
     const productImages = {
         'King em Triplo': '/images/king_triplo_new.jpg',
         'Combo Favorito + Combo Sanduíche': '/images/2GqpuXExclby.webp',
-        'Sanduíche + Batata + Bebida + BK Mix': '/images/combo_solo_new.png',
+        'Sanduíche + Batata + Bebida + BK Mix': '/images/combo_sanduba_solo.jpg',
         '3 Combos Sandubas': '/images/IMG_9329.png',
         'Dupla BK': '/images/dupla_bk_new.png',
-        'Combo Sanduba Solo': '/images/combo_solo_new.png'
+        'Combo Sanduba Solo': '/images/combo_sanduba_solo.jpg'
     };
 
     if (productParam) {
