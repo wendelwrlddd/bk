@@ -11,12 +11,12 @@ $(document).ready(function(){
 
     // Mapeamento de produtos para suas imagens
     const productImages = {
-        'King em Triplo': '/images/king_triplo_new.jpg',
-        'Combo Favorito + Combo Sanduíche': '/images/2GqpuXExclby.webp',
-        'Sanduíche + Batata + Bebida + BK Mix': '/images/combo_sanduba_solo.jpg',
-        '3 Combos Sandubas': '/images/IMG_9329.png',
-        'Dupla BK': '/images/dupla_bk_new.png',
-        'Combo Sanduba Solo': '/images/combo_sanduba_solo.jpg'
+        'King em Triplo': '/assets/checkout_king_triplo.jpg',
+        'Combo Favorito + Combo Sanduíche': '/assets/checkout_combo_favorito.webp',
+        'Sanduíche + Batata + Bebida + BK Mix': '/assets/checkout_combo_solo.jpg',
+        '3 Combos Sandubas': '/assets/checkout_3_combos.png',
+        'Dupla BK': '/assets/checkout_dupla_bk.png',
+        'Combo Sanduba Solo': '/assets/checkout_combo_solo.jpg'
     };
 
     if (productParam) {
