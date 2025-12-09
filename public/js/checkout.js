@@ -164,7 +164,7 @@ async function finalizeOrder() {
     };
 
     try {
-        const response = await fetch('https://deliveryagora-backend.fly.dev/api/create-pix', {
+        const response = await fetch('/api/criar-pix', { // Use local Vercel API
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -178,12 +178,36 @@ async function finalizeOrder() {
 
         if (data.success) {
             // Show QR Code
-            fbq('track', 'Purchase', {
-                value: orderData.order.total,
-                currency: 'BRL',
-                content_name: orderData.order.product,
-                num_items: orderData.order.quantity
-            });
+            if (typeof fbq === 'function') {
+                fbq('track', 'Purchase', {
+                    value: orderData.order.total,
+                    currency: 'BRL',
+                    content_name: orderData.order.product,
+                    num_items: orderData.order.quantity
+                });
+            }
+
+            const txid = data.transactionId;
+
+            // Start Polling for Status
+            if (txid) {
+                const pollInterval = setInterval(async () => {
+                    try {
+                        const checkRes = await fetch(`/api/checar-status?txid=${txid}`);
+                        const checkData = await checkRes.json();
+                        
+                        console.log('Status Check:', checkData.status);
+
+                        if (checkData.status === 'paid' || checkData.status === 'PAID' || checkData.status === 'CONCLUIDA') {
+                            clearInterval(pollInterval);
+                            window.location.href = '/obrigado.html';
+                        }
+                    } catch (e) {
+                        console.error('Polling error:', e);
+                    }
+                }, 3000);
+            }
+
             $('#step-3').html(`
                 <div class="text-center">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">Pagamento Pix Gerado!</h2>
@@ -205,11 +229,11 @@ async function finalizeOrder() {
                         ${data.qrCodeText}
                     </div>
                     
-                    <div class="text-green-600 font-bold flex items-center justify-center">
+                    <div class="text-green-600 font-bold flex items-center justify-center animate-pulse">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                         </svg>
-                        Aguardando pagamento...
+                        Aguardando confirmação automática...
                     </div>
                 </div>
             `);
@@ -223,8 +247,7 @@ async function finalizeOrder() {
             console.error('Erro ao gerar Pix:', data.message || 'Tente novamente.');
             console.error('Detalhes do erro:', data);
             
-            // Send log to terminal
-            logToTerminal('error', 'Erro ao gerar Pix: ' + (data.message || 'Tente novamente.'), data);
+            alert('Erro ao gerar Pix: ' + (data.message || 'Verifique seus dados.'));
             
             btn.prop('disabled', false).text(originalText);
         }
