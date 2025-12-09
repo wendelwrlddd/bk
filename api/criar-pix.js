@@ -64,8 +64,18 @@ export default async function handler(req, res) {
     // Extract QR Code data
     const pixData = data.pix || data;
     // Handle different possible response fields from IronPay
-    const qrCodeImage = pixData.qrcode_image || pixData.qr_code_image || pixData.pix_qr_code || data.qrcode_image;
+    let qrCodeImage = pixData.qrcode_image || pixData.qr_code_image || pixData.pix_qr_code || data.qrcode_image;
     const qrCodeText = pixData.qrcode || pixData.qr_code_text || pixData.pix_qr_code || data.qrcode;
+
+    // Generate QR Code Image locally if API didn't return one
+    if (qrCodeText && (!qrCodeImage || !qrCodeImage.startsWith('http'))) {
+        try {
+            const QRCode = require('qrcode');
+            qrCodeImage = await QRCode.toDataURL(qrCodeText);
+        } catch (e) {
+            console.error('Failed to generate local QR Code:', e);
+        }
+    }
 
     res.status(200).json({
         success: true,

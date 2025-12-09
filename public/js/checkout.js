@@ -225,8 +225,18 @@ async function finalizeOrder() {
                     </div>
                     
                     <p class="text-sm text-gray-500 mb-2">Ou copie o código abaixo:</p>
-                    <div class="bg-gray-100 p-3 rounded text-xs break-all mb-4 select-all cursor-pointer" onclick="navigator.clipboard.writeText(this.innerText); alert('Código copiado!')">
-                        ${data.qrCodeText}
+                    <div class="relative mb-4">
+                        <div class="bg-gray-100 p-3 rounded text-xs break-all mb-2 select-all h-24 overflow-y-auto" id="pix-code-text">
+                            ${data.qrCodeText}
+                        </div>
+                        <button onclick="navigator.clipboard.writeText(document.getElementById('pix-code-text').innerText); this.innerText = 'Copiado! ✅'; setTimeout(() => this.innerText = 'Copiar Código Pix', 2000)" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                            </svg>
+                            Copiar Código Pix
+                        </button>
                     </div>
                     
                     <div class="text-green-600 font-bold flex items-center justify-center animate-pulse">
