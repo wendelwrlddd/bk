@@ -1,3 +1,5 @@
+import QRCode from 'qrcode';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -70,7 +72,6 @@ export default async function handler(req, res) {
     // Generate QR Code Image locally if API didn't return one
     if (qrCodeText && (!qrCodeImage || !qrCodeImage.startsWith('http'))) {
         try {
-            const QRCode = require('qrcode');
             qrCodeImage = await QRCode.toDataURL(qrCodeText);
         } catch (e) {
             console.error('Failed to generate local QR Code:', e);
