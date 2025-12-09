@@ -198,7 +198,7 @@ async function finalizeOrder() {
                         
                         console.log('Status Check:', checkData.status);
 
-                        if (checkData.status === 'paid' || checkData.status === 'PAID' || checkData.status === 'CONCLUIDA') {
+                        if (['paid', 'PAID', 'CONCLUIDA', 'approved', 'APPROVED'].includes(checkData.status)) {
                             clearInterval(pollInterval);
                             window.location.href = '/obrigado.html';
                         }
