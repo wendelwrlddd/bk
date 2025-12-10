@@ -241,7 +241,7 @@ async function finalizeOrder() {
 
                     <div class="space-y-3 mb-8">
                         <div class="hidden" id="pix-code-text">${data.qrCodeText}</div>
-                        <button onclick="navigator.clipboard.writeText(document.getElementById('pix-code-text').textContent); this.innerHTML = 'Copiado! ✅'; setTimeout(() => this.innerHTML = '<svg xmlns=\'http://www.w3.org/2000/svg\' class=\'h-5 w-5\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z\' /></svg> Copiar código', 2000)" 
+                        <button onclick="copyToClipboard('${data.qrCodeText}')" id="copy-btn" 
                             class="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-3 rounded-lg flex justify-center items-center gap-2 transition border border-blue-100">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -361,4 +361,40 @@ function startQRTimer(seconds) {
     }
     
     updateTimer();
+}
+
+// Robust Copy Function
+function copyToClipboard(text) {
+    const btn = document.getElementById('copy-btn');
+    const originalContent = btn.innerHTML;
+
+    // Fallback for older browsers or insecure contexts
+    if (!navigator.clipboard) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed'; // Prevent scrolling to bottom
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            btn.innerHTML = 'Copiado! ✅';
+            setTimeout(() => btn.innerHTML = originalContent, 2000);
+        } catch (err) {
+            console.error('Fallback copy failed', err);
+            prompt("Seu navegador não suporta cópia automática. Copie o código abaixo:", text);
+        }
+        document.body.removeChild(textarea);
+        return;
+    }
+
+    // Modern API
+    navigator.clipboard.writeText(text).then(function() {
+        btn.innerHTML = 'Copiado! ✅';
+        setTimeout(() => btn.innerHTML = originalContent, 2000);
+    }, function(err) {
+        console.error('Async: Could not copy text: ', err);
+        // Fallback to prompt if permission denied
+         prompt("Não foi possível copiar automaticamente. Copie o código abaixo:", text);
+    });
 }
