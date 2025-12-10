@@ -26,7 +26,7 @@ const transactions = {};
 app.post('/api/criar-pix', criarPix);
 
 // Updated check status: Check local memory first, then fallback to API (or just local)
-app.get('/api/checar-status', (req, res) => {
+app.get('/api/checar-status', async (req, res) => {
     const { txid } = req.query;
     if (!txid) return res.status(400).json({ error: 'Transaction ID required' });
 
@@ -37,8 +37,40 @@ app.get('/api/checar-status', (req, res) => {
         return res.status(200).json({ status: status, full_data: {} });
     }
 
-    // If not in memory, we could poll IronPay, but it's returning 404.
-    // Let's return 'pending' if not found.
+    // Fallback: Try to query the API directly as per user suggestion
+    // User suggested: https://api.ironpay.com/payment/{id}
+    // Existing known domain: https://api.ironpayapp.com.br
+    // We will try the existing domain with the /payment/ path first, as domains usually match
+    try {
+        const directCheckUrl = `https://api.ironpayapp.com.br/payment/${txid}`; // Hypothesis: path was wrong before
+        // Also valid: https://api.ironpayapp.com.br/api/public/v1/payments/${txid} ?
+        
+        console.log(`[STATUS CHECK] Polling External API: ${directCheckUrl}`);
+        const response = await fetch(directCheckUrl, {
+             headers: {
+                'Authorization': `Bearer ${process.env.IRONPAY_API_TOKEN}`,
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`[STATUS CHECK] External API Response:`, data);
+            const externalStatus = data.status || data.payment_status;
+            
+            // Update local memory if found
+            if (externalStatus) {
+                transactions[txid] = externalStatus;
+            }
+             
+            return res.status(200).json({ status: externalStatus || 'pending', full_data: data });
+        } else {
+             console.log(`[STATUS CHECK] External API Failed: ${response.status} ${response.statusText}`);
+        }
+    } catch (e) {
+        console.error('[STATUS CHECK] External Fetch Error:', e);
+    }
+
     return res.status(200).json({ status: 'pending' });
 });
 
