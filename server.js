@@ -38,6 +38,8 @@ app.post('/api/criar-pix', async (req, res) => {
             installments: 1,
             amount: amountInCents,
             notification_url: 'https://deliveryagora-backend.fly.dev/api/webhook',
+            callback_url: 'https://deliveryagora-backend.fly.dev/api/webhook', // Redundant
+            webhook_url: 'https://deliveryagora-backend.fly.dev/api/webhook', // Redundant
             cart: [
                 {
                     product_hash: PRODUCT_HASH,
@@ -137,8 +139,8 @@ app.get('/api/checar-status', async (req, res) => {
     // 2. Poll API (Fallback)
     try {
         console.log(`[STATUS CHECK] Polling External API for ${txid}...`);
-        // User suggested endpoint structure
-        const response = await fetch(`https://api.ironpayapp.com.br/payment/${txid}`, {
+        // Corrected REST Endpoint
+        const response = await fetch(`https://api.ironpayapp.com.br/api/public/v1/transactions/${txid}`, {
              headers: {
                 'Authorization': `Bearer ${process.env.IRONPAY_API_TOKEN}`,
                 'Accept': 'application/json'
