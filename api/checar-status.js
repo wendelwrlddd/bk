@@ -19,9 +19,10 @@ export default async function handler(req, res) {
     
     // Map IronPay status
     // Expected statuses: 'pending', 'paid', 'refused'
+    console.log(`[STATUS CHECK] TXID: ${txid} | Status: ${data.status} | PaymentStatus: ${data.payment_status}`);
     res.status(200).json({ status: data.status || data.payment_status, full_data: data }); 
   } catch (error) {
-    console.error(error);
+    console.error(`[STATUS ERROR] TXID: ${txid}`, error);
     res.status(500).json({ error: 'Erro ao verificar status' });
   }
 }
