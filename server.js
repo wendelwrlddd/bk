@@ -129,7 +129,8 @@ app.get('/api/checar-status', async (req, res) => {
     const memoryData = global.pagamentos[txid];
     console.log(`[STATUS CHECK] TXID: ${txid} | Memory: ${memoryData?.status}`);
 
-    if (memoryData && ['paid', 'approved', 'completed'].includes(memoryData.status)) {
+    const validStatuses = ['paid', 'approved', 'completed', 'succeeded', 'confirmed', 'settled'];
+    if (memoryData && validStatuses.includes(memoryData.status?.toLowerCase())) {
         return res.status(200).json({ status: memoryData.status });
     }
 
@@ -185,7 +186,13 @@ app.post('/api/webhook', (req, res) => {
         newStatus = req.body.status;
     }
 
-    if (txid) {
+    if (txid && newStatus) {
+         // Normalize status
+         const validStatuses = ['paid', 'approved', 'completed', 'succeeded', 'confirmed', 'settled'];
+         if (validStatuses.includes(newStatus.toLowerCase())) {
+             newStatus = 'approved';
+         }
+
         if (!global.pagamentos[txid]) global.pagamentos[txid] = {};
         global.pagamentos[txid].status = newStatus;
         console.log(`[WEBHOOK] Updated ${txid} -> ${newStatus}`);
