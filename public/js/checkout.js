@@ -273,7 +273,7 @@ async function finalizeOrder() {
 }
 
 function logToTerminal(type, message, data) {
-    fetch('https://deliveryagora-backend.fly.dev/api/log', {
+    fetch('/api/log', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
