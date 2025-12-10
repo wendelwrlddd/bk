@@ -44,20 +44,38 @@ app.get('/api/checar-status', (req, res) => {
 
 // Webhook Handler - Receives status updates from IronPay/Mercado Pago
 app.post('/api/webhook', (req, res) => {
-    console.log('[WEBHOOK] Received:', JSON.stringify(req.body, null, 2));
+    console.log('[WEBHOOK] Received Raw:', JSON.stringify(req.body, null, 2));
     
-    // User provided format: { Action: 'payment.updated', data: { id: '...' }, ... }
-    // Or IronPay format. We'll try to extract the ID and status.
-    const { id, data, current_status, status } = req.body;
-    
-    // Adjust logic to extract ID and Status based on the actual payload structure
-    // Assuming the user's example:
-    const txid = data?.id || id;
-    const newStatus = status || current_status || 'approved'; // Default to approved if we get a webhook? verify payload.
+    let txid, newStatus;
+
+    // Format 1: User description (IronPay)
+    // { "event": "payment_approved", "payment": { "id": "...", "status": "approved" } }
+    if (req.body.payment && req.body.payment.id) {
+        txid = req.body.payment.id;
+        newStatus = req.body.payment.status;
+    }
+    // Format 2: Old assumption / Mercado Pago style
+    // { "action": "...", "data": { "id": "..." } }
+    else if (req.body.data && req.body.data.id) {
+        txid = req.body.data.id;
+        newStatus = req.body.status || 'approved'; // Mercado Pago might need a fetch, but assume approved for now if webhook hits
+    }
+    // Format 3: Flat
+    else if (req.body.id) {
+        txid = req.body.id;
+        newStatus = req.body.status || req.body.current_status;
+    }
 
     if (txid) {
+        // Simplify status to 'approved' for frontend logic if it matches known success states
+        if (['paid', 'approved', 'completed', 'succeeded'].includes(newStatus)) {
+            newStatus = 'approved';
+        }
+
         transactions[txid] = newStatus;
-        console.log(`[WEBHOOK] Updated TXID: ${txid} to Status: ${newStatus}`);
+        console.log(`[WEBHOOK] ✅ PROCESSED | TXID: ${txid} | NewStatus: ${newStatus}`);
+    } else {
+        console.log('[WEBHOOK] ⚠️ Could not extract Transaction ID from payload');
     }
 
     res.status(200).send('OK');
