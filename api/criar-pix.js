@@ -1,6 +1,7 @@
 import QRCode from 'qrcode';
 
 export default async function handler(req, res) {
+  console.log('[API] New Pix Request received');
   if (req.method !== 'POST') return res.status(405).end();
 
   const { customer, order = { total: 29.90, product: 'Combo BK', quantity: 1 }, address } = req.body;
