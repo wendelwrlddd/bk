@@ -18,6 +18,7 @@ export default async function handler(req, res) {
     payment_method: 'pix',
     installments: 1,
     amount: amountInCents,
+    notification_url: 'https://deliveryagora-backend.fly.dev/api/webhook',
     cart: [
         {
             product_hash: PRODUCT_HASH,
