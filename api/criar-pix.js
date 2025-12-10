@@ -59,6 +59,7 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
+    console.log('[CRIAR-PIX] IronPay Response:', JSON.stringify(data, null, 2));
     
     // Check for IronPay specific error structure
     if (data.payment_status === 'refused' || data.error) {
