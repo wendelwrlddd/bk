@@ -2,8 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import criarPix from './api/criar-pix.js';
-import checarStatus from './api/checar-status.js';
+import QRCode from 'qrcode';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,38 +14,130 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(join(__dirname, 'dist')));
-app.use(express.static(join(__dirname, 'public'))); // Fallback for static files not in dist if needed
+app.use(express.static(join(__dirname, 'public')));
 
-// API Routes
-// In-memory store for transaction statuses (for demo purposes)
-// In production, use a database (Redis, Postgres, etc.)
-const transactions = {};
+// GLOBAL MEMORY STORE
+global.pagamentos = {}; // User requested global variable for stability
 
-// API Routes
-app.post('/api/criar-pix', criarPix);
+// === API ROUTES ===
 
-// Updated check status: Check local memory first, then fallback to API (or just local)
+// 1. CRIAR PIX (Merged Logic)
+app.post('/api/criar-pix', async (req, res) => {
+    try {
+        console.log('[API] CRIAR PIX INICIADO');
+        const { customer, order = { total: 29.90, product: 'Combo BK', quantity: 1 }, address } = req.body;
+        
+        const OFFER_HASH = 'dqrtzjkszk_ouiojpb4p1'; 
+        const PRODUCT_HASH = 'dqrtzjkszk';
+        const amountInCents = Math.round(order.total * 100);
+
+        const payload = {
+            api_token: process.env.IRONPAY_API_TOKEN,
+            offer_hash: OFFER_HASH,
+            payment_method: 'pix',
+            installments: 1,
+            amount: amountInCents,
+            notification_url: 'https://deliveryagora-backend.fly.dev/api/webhook',
+            cart: [
+                {
+                    product_hash: PRODUCT_HASH,
+                    title: order.product,
+                    quantity: order.quantity,
+                    price: amountInCents,
+                    tangible: false,
+                    operation_type: 1
+                }
+            ],
+            customer: {
+                name: customer?.name || 'Cliente',
+                email: customer?.email || 'email@teste.com',
+                document: customer?.cpf?.replace(/\D/g, '') || '00000000000',
+                phone: customer?.phone?.replace(/\D/g, '') || '00000000000',
+                phone_number: customer?.phone?.replace(/\D/g, '').slice(2) || '900000000',
+                phone_country_code: '55',
+                zip_code: address?.cep?.replace(/\D/g, '') || '00000000',
+                street_name: address?.street || 'Rua',
+                number: address?.number || '0',
+                complement: address?.complement || '',
+                neighborhood: address?.neighborhood || 'Bairro',
+                city: address?.city || 'Cidade',
+                state: address?.state || 'SP',
+                country: 'br'
+            }
+        };
+
+        console.log('[API] Sending to IronPay...');
+        const response = await fetch('https://api.ironpayapp.com.br/api/public/v1/transactions', { 
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.IRONPAY_API_TOKEN}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        console.log('[API] IronPay Response:', JSON.stringify(data, null, 2));
+
+        if (data.payment_status === 'refused' || data.error) {
+            return res.status(400).json({ success: false, message: 'Pagamento recusado', data });
+        }
+
+        // Extract ID and QR Code
+        const txid = data.id || data.txid; // IronPay response: { "id": 12345, ... } based on user provided ex
+        const pixData = data.pix || data;
+        let qrCodeImage = pixData.qrcode_image || pixData.qr_code_image || pixData.pix_qr_code || data.qrcode_image;
+        const qrCodeText = pixData.qrcode || pixData.qr_code_text || pixData.pix_qr_code || data.qrcode;
+
+        if (qrCodeText && (!qrCodeImage || !qrCodeImage.startsWith('http'))) {
+            try {
+                qrCodeImage = await QRCode.toDataURL(qrCodeText);
+            } catch (e) { console.error('QR Gen Error:', e); }
+        }
+
+        // SAVE TO GLOBAL MEMORY
+        if (txid) {
+            global.pagamentos[txid] = { 
+                status: 'pending', 
+                createdAt: Date.now(),
+                rawData: data
+            };
+            console.log(`[MEMORY] Saved TXID: ${txid} | Status: pending`);
+        }
+
+        res.status(200).json({
+            success: true,
+            transactionId: txid,
+            qrCodeImage: qrCodeImage,
+            qrCodeText: qrCodeText,
+            full_data: data
+        });
+
+    } catch (error) {
+        console.error('[API] Create Error:', error);
+        res.status(500).json({ success: false, message: 'Erro interno' });
+    }
+});
+
+// 2. CHECK STATUS
 app.get('/api/checar-status', async (req, res) => {
     const { txid } = req.query;
     if (!txid) return res.status(400).json({ error: 'Transaction ID required' });
 
-    const status = transactions[txid];
-    console.log(`[STATUS CHECK] TXID: ${txid} | Local Memory Status: ${status}`);
+    // 1. Check Memory
+    const memoryData = global.pagamentos[txid];
+    console.log(`[STATUS CHECK] TXID: ${txid} | Memory: ${memoryData?.status}`);
 
-    if (status) {
-        return res.status(200).json({ status: status, full_data: {} });
+    if (memoryData && ['paid', 'approved', 'completed'].includes(memoryData.status)) {
+        return res.status(200).json({ status: memoryData.status });
     }
 
-    // Fallback: Try to query the API directly as per user suggestion
-    // User suggested: https://api.ironpay.com/payment/{id}
-    // Existing known domain: https://api.ironpayapp.com.br
-    // We will try the existing domain with the /payment/ path first, as domains usually match
+    // 2. Poll API (Fallback)
     try {
-        const directCheckUrl = `https://api.ironpayapp.com.br/payment/${txid}`; // Hypothesis: path was wrong before
-        // Also valid: https://api.ironpayapp.com.br/api/public/v1/payments/${txid} ?
-        
-        console.log(`[STATUS CHECK] Polling External API: ${directCheckUrl}`);
-        const response = await fetch(directCheckUrl, {
+        console.log(`[STATUS CHECK] Polling External API for ${txid}...`);
+        // User suggested endpoint structure
+        const response = await fetch(`https://api.ironpayapp.com.br/payment/${txid}`, {
              headers: {
                 'Authorization': `Bearer ${process.env.IRONPAY_API_TOKEN}`,
                 'Accept': 'application/json'
@@ -55,75 +146,67 @@ app.get('/api/checar-status', async (req, res) => {
         
         if (response.ok) {
             const data = await response.json();
-            console.log(`[STATUS CHECK] External API Response:`, data);
             const externalStatus = data.status || data.payment_status;
+            console.log(`[STATUS CHECK] External Outcome: ${externalStatus}`);
             
-            // Update local memory if found
             if (externalStatus) {
-                transactions[txid] = externalStatus;
+                // Update memory
+                if (!global.pagamentos[txid]) global.pagamentos[txid] = {};
+                global.pagamentos[txid].status = externalStatus;
+                
+                return res.status(200).json({ status: externalStatus });
             }
-             
-            return res.status(200).json({ status: externalStatus || 'pending', full_data: data });
         } else {
-             console.log(`[STATUS CHECK] External API Failed: ${response.status} ${response.statusText}`);
+            console.log(`[STATUS CHECK] External HTTP ${response.status}`);
         }
     } catch (e) {
-        console.error('[STATUS CHECK] External Fetch Error:', e);
+        console.error('[STATUS CHECK] External Error:', e.message);
     }
 
-    return res.status(200).json({ status: 'pending' });
+    // Default
+    res.status(200).json({ status: 'pending' });
 });
 
-// Webhook Handler - Receives status updates from IronPay/Mercado Pago
+// 3. WEBHOOK
 app.post('/api/webhook', (req, res) => {
-    console.log('[WEBHOOK] Received Raw:', JSON.stringify(req.body, null, 2));
+    console.log('[WEBHOOK] Received:', JSON.stringify(req.body));
     
+    // Parse Payload
     let txid, newStatus;
-
-    // Format 1: User description (IronPay)
-    // { "event": "payment_approved", "payment": { "id": "...", "status": "approved" } }
-    if (req.body.payment && req.body.payment.id) {
+    
+    if (req.body.payment) { // User Format
         txid = req.body.payment.id;
         newStatus = req.body.payment.status;
-    }
-    // Format 2: Old assumption / Mercado Pago style
-    // { "action": "...", "data": { "id": "..." } }
-    else if (req.body.data && req.body.data.id) {
+    } else if (req.body.data) { // Standard Format?
         txid = req.body.data.id;
-        newStatus = req.body.status || 'approved'; // Mercado Pago might need a fetch, but assume approved for now if webhook hits
-    }
-    // Format 3: Flat
-    else if (req.body.id) {
+        newStatus = 'approved'; 
+    } else if (req.body.id) { // Flat
         txid = req.body.id;
-        newStatus = req.body.status || req.body.current_status;
+        newStatus = req.body.status;
     }
 
     if (txid) {
-        // Simplify status to 'approved' for frontend logic if it matches known success states
-        if (['paid', 'approved', 'completed', 'succeeded'].includes(newStatus)) {
-            newStatus = 'approved';
-        }
-
-        transactions[txid] = newStatus;
-        console.log(`[WEBHOOK] ✅ PROCESSED | TXID: ${txid} | NewStatus: ${newStatus}`);
-    } else {
-        console.log('[WEBHOOK] ⚠️ Could not extract Transaction ID from payload');
+        if (!global.pagamentos[txid]) global.pagamentos[txid] = {};
+        global.pagamentos[txid].status = newStatus;
+        console.log(`[WEBHOOK] Updated ${txid} -> ${newStatus}`);
     }
 
     res.status(200).send('OK');
 });
 
 app.post('/api/log', (req, res) => {
-    const { type, message, data } = req.body;
-    console.log(`[CLIENT-LOG] [${type.toUpperCase()}] ${message}`, data || '');
-    res.status(200).send('Logged');
+    console.log(`[CLIENT] ${req.body.message}`);
+    res.send('ok');
 });
 
-// SPA Fallback - Serve index.html for any unknown route
-app.get(/(.*)/, (req, res) => {
-    res.sendFile(join(__dirname, 'dist', 'index.html'));
+// Fallback
+app.get('*', (req, res) => {
+    // Only serve index for html requests, avoid swallowing API errors
+    if (req.headers.accept && req.headers.accept.includes('html')) {
+        res.sendFile(join(__dirname, 'dist', 'index.html'));
+    } else {
+        res.status(404).json({ error: 'Not found' });
+    }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
