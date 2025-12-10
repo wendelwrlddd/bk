@@ -209,4 +209,13 @@ app.get('*', (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Server running on ${PORT}`));
+
+process.on('uncaughtException', (err) => {
+    console.error('[CRASH] Uncaught Exception:', err);
+    // Keep alive if possible, or exit gracefully
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[CRASH] Unhandled Rejection at:', promise, 'reason:', reason);
+});
