@@ -133,6 +133,9 @@ function buscarCep(cep) {
     }
 }
 
+// API Base URL
+const API_BASE_URL = 'https://deliveryagora-backend.fly.dev';
+
 async function finalizeOrder() {
     const btn = $('button[onclick="finalizeOrder()"]');
     const originalText = btn.text();
@@ -164,7 +167,7 @@ async function finalizeOrder() {
     };
 
     try {
-        const response = await fetch('/api/criar-pix', { // Use local Vercel API
+        const response = await fetch(`${API_BASE_URL}/api/criar-pix`, { 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -193,7 +196,7 @@ async function finalizeOrder() {
             if (txid) {
                 const pollInterval = setInterval(async () => {
                     try {
-                        const checkRes = await fetch(`/api/checar-status?txid=${txid}`);
+                        const checkRes = await fetch(`${API_BASE_URL}/api/checar-status?txid=${txid}`);
                         const checkData = await checkRes.json();
                         
                         console.log('Status Check:', checkData.status);
@@ -232,7 +235,7 @@ async function finalizeOrder() {
                         <button onclick="navigator.clipboard.writeText(document.getElementById('pix-code-text').innerText); this.innerText = 'Copiado! ✅'; setTimeout(() => this.innerText = 'Copiar Código Pix', 2000)" 
                             class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                            <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
                                 <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
                             </svg>
                             Copiar Código Pix
@@ -273,7 +276,7 @@ async function finalizeOrder() {
 }
 
 function logToTerminal(type, message, data) {
-    fetch('/api/log', {
+    fetch(`${API_BASE_URL}/api/log`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
