@@ -200,6 +200,20 @@ app.post('/api/webhook', (req, res) => {
         console.log(`[WEBHOOK] Updated ${txid} -> ${newStatus}`);
     }
 
+    // UTMFY PROXY LOGIC
+    const UTMIFY_URL = 'https://api.utmify.com.br/webhooks/iron-pay?id=6939a049640f5d8c0c85f3d6';
+    
+    // Fire and Forget Forwarding
+    fetch(UTMIFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body)
+    }).then(resp => {
+        console.log(`[UTMIFY PROXY] Forwarded. Status: ${resp.status}`);
+    }).catch(err => {
+        console.error('[UTMIFY PROXY] Failed to forward:', err.message);
+    });
+
     res.status(200).send('OK');
 });
 
