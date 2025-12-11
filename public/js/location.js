@@ -1,9 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const locationText = document.getElementById('location-text');
     
-    // Show improved loading modal immediately
-    const loadingModal = showImprovedLoadingModal();
-    
     try {
         // Usar ipapi.co para geolocalização
         const response = await fetch('https://ipapi.co/json/');
@@ -20,22 +17,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.updateNotificationCity(data.city);
             }
             
-            // Show success message in modal
-            showRestaurantFoundMessage(loadingModal, data.city);
-            
-            // Close modal after 3 seconds and show promotion
-            setTimeout(() => {
-                loadingModal.remove();
-                showExclusivePromotion(data.city);
-            }, 3000);
+            // Show promotion
+            showExclusivePromotion(data.city);
         } else {
             // Fallback if API fails
-            loadingModal.remove();
             locationText.textContent = 'Perto de você';
         }
     } catch (error) {
         console.error('Error fetching location:', error);
-        loadingModal.remove();
         locationText.textContent = 'Perto de você';
     }
 });
