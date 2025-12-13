@@ -17,7 +17,15 @@
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '871352905337979');
     fbq('track', 'PageView');
-    fbq('track', 'Purchase', {currency: "BRL", value: 30.00}); // Garantir o disparo
+    
+    // Only fire Purchase event if not already fired (backup for direct page access)
+    if (!sessionStorage.getItem('purchaseEventFired')) {
+        console.log('[OBRIGADO] Firing backup Purchase event');
+        fbq('track', 'Purchase', {currency: "BRL", value: 30.00});
+        sessionStorage.setItem('purchaseEventFired', 'true');
+    } else {
+        console.log('[OBRIGADO] Purchase event already fired, skipping duplicate');
+    }
     </script>
     <script src="https://cdn.utmify.com.br/scripts/utms/latest.js" data-utmify-prevent-xcod-sck data-utmify-prevent-subids async defer></script>
     <!-- End Meta Pixel Code -->

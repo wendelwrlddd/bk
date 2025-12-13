@@ -182,26 +182,43 @@ async function finalizeOrder() {
         if (data.success) {
             // Show QR Code
             
-            // Purchase event moved to obrigado.html to track ONLY confirmed payments
-
             const txid = data.transactionId;
+            const orderTotal = quantity * productPrice;
 
             // Start Polling for Status
             if (txid) {
+                let purchaseEventFired = false; // Flag to prevent duplicate events
+                
                 const pollInterval = setInterval(async () => {
                     try {
                         const checkRes = await fetch(`${API_BASE_URL}/api/checar-status?txid=${txid}`);
                         const checkData = await checkRes.json();
                         
-                        console.log('Status Check:', checkData.status);
+                        console.log('[POLLING] Status Check:', checkData.status);
 
                         // Updated Status Check to include all variations
                         if (['paid', 'approved', 'completed', 'succeeded', 'confirmed', 'settled'].includes(checkData.status?.toLowerCase())) {
                             clearInterval(pollInterval);
-                            window.location.href = '/obrigado.html';
+                            
+                            // CRITICAL: Fire Purchase event BEFORE redirect
+                            if (!purchaseEventFired && typeof fbq !== 'undefined') {
+                                console.log('[PURCHASE EVENT] Firing Purchase event - Status:', checkData.status);
+                                fbq('track', 'Purchase', {
+                                    currency: 'BRL',
+                                    value: orderTotal
+                                });
+                                purchaseEventFired = true;
+                                sessionStorage.setItem('purchaseEventFired', 'true'); // Mark as fired
+                                console.log('[PURCHASE EVENT] Purchase event fired successfully!');
+                            }
+                            
+                            // Wait 500ms to ensure event is sent before redirect
+                            setTimeout(() => {
+                                window.location.href = '/obrigado.html';
+                            }, 500);
                         }
                     } catch (e) {
-                        console.error('Polling error:', e);
+                        console.error('[POLLING] Error:', e);
                     }
                 }, 3000);
             }
