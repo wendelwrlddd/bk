@@ -11,11 +11,7 @@ const randomNames = [
 
 // Lista de combos com imagens
 const combos = [
-    { name: 'King em Triplo', image: '/assets/notif_king_triplo.jpg' },
-    { name: 'Combo Favorito + Combo Sanduíche', image: '/assets/notif_combo_favorito.png' },
-    { name: 'Sanduíche + Batata + Bebida + BK Mix', image: '/assets/notif_combo_mix.jpg' },
-    { name: '3 Combos Sandubas', image: '/assets/notif_3_combos.png' },
-    { name: 'Dupla BK', image: '/assets/notif_dupla_bk.png' }
+    { name: 'Combo Perfeito pra Galera!', image: '/images/6_burgers_batata.png' }
 ];
 
 // Função para obter item aleatório de um array
